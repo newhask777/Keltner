@@ -4,6 +4,23 @@ from env  import *
 import json
 import logging
 
+
+def get_assets(cl : HTTP, coin: str):
+    """
+    Получаю остатки на аккаунте по конкретной монете
+    :param cl:
+    :param coin:
+    :return:
+    """
+
+    balance = cl.get_wallet_balance(
+            accountType="UNIFIED",
+            coin=coin,
+    )
+   
+    return balance
+
+
 def main():
 
     # log = logging.basicConfig(format="%(asctime)s %(message)s", level=logging.DEBUG)
@@ -24,38 +41,35 @@ def main():
         # r = cl.get_instruments_info(category="spot", symbol="SOLUSDT")
         # print(r)
 
-        # avbl = get_assets(cl, "SOL")
-        # print(avbl, round(avbl, 3), floor_price(avbl, 3), float_trunc(avbl, 3))
+        avbl = get_assets(session, "USDT")
+        print(avbl)
 
         # print(session.get_wallet_balance(
         #     accountType="UNIFIED",
         #     coin="USDT",
         # ))
 
-        # balance = session.get_wallet_balance(
-        #     accountType="UNIFIED",
-        #     coin="USDT",
+      
+
+        with open('json/balance.json', 'w', encoding='utf-8') as f:
+            json.dump(avbl, f, indent=4, ensure_ascii=False)
+
+
+
+        # r = session.place_order(
+        #     category="linear",
+        #     symbol="TONUSDT",
+        #     side="Sell",
+        #     orderType="Market",
+        #     # qty=floor_price(avbl, 3),
+        #     qty=avbl,
+        #     marketUnit="quoteCoin", # USDT
         # )
 
-        # with open('json/balance.json', 'w', encoding='utf-8') as f:
-        #     json.dump(balance, f, indent=4, ensure_ascii=False)
+        # with open('json/order.json', 'w', encoding='utf-8') as f:
+        #     json.dump(r, f, indent=4, ensure_ascii=False)
 
-
-
-        r = session.place_order(
-            category="linear",
-            symbol="TONUSDT",
-            side="Sell",
-            orderType="Market",
-            # qty=floor_price(avbl, 3),
-            qty=2,
-            marketUnit="quoteCoin",
-        )
-
-        with open('json/order.json', 'w', encoding='utf-8') as f:
-            json.dump(r, f, indent=4, ensure_ascii=False)
-
-        print(r)
+        # print(r)
 
     except exceptions.InvalidRequestError as e:
         print("ByBit API Request Error", e.status_code, e.message, sep=" | ")

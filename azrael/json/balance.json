@@ -4,42 +4,42 @@
     "result": {
         "list": [
             {
-                "totalEquity": "11.71548747",
+                "totalEquity": "11.60202151",
                 "accountIMRate": "0",
-                "totalMarginBalance": "11.70785064",
+                "totalMarginBalance": "11.59446853",
                 "totalInitialMargin": "0",
                 "accountType": "UNIFIED",
-                "totalAvailableBalance": "11.70785064",
+                "totalAvailableBalance": "11.59446853",
                 "accountMMRate": "0",
                 "totalPerpUPL": "0",
-                "totalWalletBalance": "11.70785064",
+                "totalWalletBalance": "11.59446853",
                 "accountLTV": "0",
                 "totalMaintenanceMargin": "0",
                 "coin": [
                     {
                         "availableToBorrow": "",
-                        "bonus": "0",
-                        "accruedInterest": "0",
+                        "bonus": "",
+                        "accruedInterest": "",
                         "availableToWithdraw": "",
-                        "totalOrderIM": "0",
-                        "equity": "11.70307578",
-                        "totalPositionMM": "0",
-                        "usdValue": "11.70785064",
-                        "unrealisedPnl": "0",
-                        "collateralSwitch": true,
+                        "totalOrderIM": "",
+                        "equity": "",
+                        "totalPositionMM": "",
+                        "usdValue": "",
+                        "unrealisedPnl": "",
+                        "collateralSwitch": false,
                         "spotHedgingQty": "0",
-                        "borrowAmount": "0.000000000000000000",
-                        "totalPositionIM": "0",
-                        "walletBalance": "11.70307578",
-                        "cumRealisedPnl": "-44.25168151",
-                        "locked": "0",
+                        "borrowAmount": "",
+                        "totalPositionIM": "",
+                        "walletBalance": "",
+                        "cumRealisedPnl": "",
+                        "locked": "",
                         "marginCollateral": true,
-                        "coin": "USDT"
+                        "coin": "SOL"
                     }
                 ]
             }
         ]
     },
     "retExtInfo": {},
-    "time": 1739565215053
+    "time": 1739567511453
 }
