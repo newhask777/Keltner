@@ -2,19 +2,24 @@ import ccxt
 import pandas as pd
 import time
 
-# Настройки API
-api_key = 'hHmv5ikDrmQrhR2i2e'
-api_secret = 'vckUl1bSyBJJhhx5bmeReKL46UrPYFEAsyzq'
 
 # Демо
-# api_key = ''
-# api_secret = ''
+api_key = 'JhdHzuNS7qCrWSGTiX'
+api_secret = 'A33dhGU3XxHTA2AcQv0b408l3ngo6OKrLYjU'
 
 # Инициализация подключения к Bybit
 exchange = ccxt.bybit({
     'apiKey': api_key,
     'secret': api_secret,
+    "options": {
+        "defaultType": "futures",  # swap or "future"
+        "trade.type": "linear"  # for USDT perpetual futures
+
+    }
 })
+
+exchange.enable_demo_trading(True)
+
 
 # Параметры стратегии
 symbol = 'BTC/USDT'  # Торговая пара
@@ -83,16 +88,18 @@ def start(in_position):
             signal = check_signals(df)
             print(f"Pos: {in_position}")
             print(f"Sig: {signal}")
+            # print(exchange.fetch_balance())
+
 
             if signal == 'buy' and in_position == False:
                 print("Сигнал на покупку")
                 # Размещение ордера на покупку
-                # order = exchange.create_market_buy_order(symbol, 0.001)  # Пример размера ордера
+                order = exchange.create_market_buy_order(symbol, 0.001)  # Пример размера ордера
                 in_position = True
                
                 print(in_position)
                 print(signal)
-                print("Ордер на покупку размещен:")  
+                print("Ордер на покупку размещен:", order)  
 
             elif signal == 'buy' or signal == None and in_position == True:           
                 last_row = df.iloc[-1]
@@ -105,12 +112,12 @@ def start(in_position):
             if signal == 'sell' and in_position == False:
                 print("Сигнал на продажу")
                 # # Размещение ордера на продажу
-                # order = exchange.create_market_sell_order(symbol, 0.001)  # Пример размера ордера
+                order = exchange.create_market_sell_order(symbol, 0.001)  # Пример размера ордера
                 in_position = True
                 
                 print(in_position)
                 print(signal)
-                print("Ордер на продажу размещен:")   
+                print("Ордер на продажу размещен:", order)   
 
             elif signal == 'sell' or signal == None and in_position == True: 
                 last_row = df.iloc[-1]
