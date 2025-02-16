@@ -1,136 +1,187 @@
+from pybit.unified_trading import WebSocket, HTTP
+from pybit import exceptions
 import ccxt
 import pandas as pd
 import time
+import json
+from datetime import datetime
+from indicators import Indicators
 
-# Настройки API
-api_key = 'hHmv5ikDrmQrhR2i2e'
-api_secret = 'vckUl1bSyBJJhhx5bmeReKL46UrPYFEAsyzq'
+class ByBitMethods(Indicators):
 
-# Демо
-# api_key = ''
-# api_secret = ''
+    def __init__(self, api_key=None, api_secret=None, interval=5, symbol='BTCUSDT', category='linear', save_ws=False, save_http=False, db=None):
+        self.api_key = api_key
+        self.api_secret = api_secret
+        self.interval = interval
+        self.symbol = symbol
+        self.category = category
+        self.stream_type = ''
+        self.save_ws = save_ws
+        self.save_http = save_http
+        self.db = db
 
-# Инициализация подключения к Bybit
-exchange = ccxt.bybit({
-    'apiKey': api_key,
-    'secret': api_secret,
-})
+        # Параметры стратегии
+        self.timeframe = '1m'  # Таймфрейм
+        self.atr_period = 14  # Период для ATR
+        self.ema_period = 20  # Период для EMA
+        self.multiplier = 1  # Множитель для ATR
 
-# Параметры стратегии
-symbol = 'BTC/USDT'  # Торговая пара
-timeframe = '1m'  # Таймфрейм
-atr_period = 14  # Период для ATR
-ema_period = 20  # Период для EMA
-multiplier = 1  # Множитель для ATR
+         # Инициализация подключения к Bybit
+        self.exchange = ccxt.bybit({
+            'apiKey': self.api_key,
+            'secret': self.api_secret,
+        })
 
-in_position = False
-signal = None
+        self.session = HTTP()
 
-# Функция для получения данных
-def fetch_ohlcv(symbol, timeframe, limit=100):
-    ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-    df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-    return df
+        self.in_position = False
+        self.signal = None
 
-# Функция для расчета EMA
-def calculate_ema(df, period):
-    df['ema'] = df['close'].ewm(span=period, adjust=False).mean()
-    return df
+    # WebSocket method
+    def ws_stream(self):
+        self.stream_type = 'websocket'
 
-# Функция для расчета ATR
-def calculate_atr(df, period):
-    df['tr'] = df['high'] - df['low']
-    df['atr'] = df['tr'].rolling(window=period).mean()
-    return df
+        def save_to_db(message):
+            # print(message)
 
-# Функция для расчета канала Кельтнера
-def calculate_keltner_channel(df, ema_period, atr_period, multiplier):
-    df = calculate_ema(df, ema_period)
-    df = calculate_atr(df, atr_period)
-    df['upper_band'] = df['ema'] + (df['atr'] * multiplier)
-    df['lower_band'] = df['ema'] - (df['atr'] * multiplier)
-    return df
+            df = self.http_query(self.session)
+            # df = df.iloc[:, :-1]
+            df = self.calculate_keltner_channel(df, self.ema_period, self.atr_period, self.multiplier)
 
-# Функция для проверки условий входа и выхода
-def check_signals(df):
-    last_row = df.iloc[-1]
-    prev_row = df.iloc[-2]
+            # print(df)
 
-    # Условие для покупки
-    # if last_row['close'] > last_row['upper_band'] and prev_row['close'] <= prev_row['upper_band']:
-    if last_row['close'] > last_row['upper_band'] and prev_row['close'] > prev_row['upper_band']:
-        return 'buy'
+            # print(self.signal)
+            # print(self.in_position)
 
-    # Условие для продажи
-    # elif last_row['close'] < last_row['lower_band'] and prev_row['close'] >= prev_row['lower_band']:
-    elif last_row['close'] < last_row['lower_band'] and prev_row['close'] < prev_row['lower_band']:
-        return 'sell'
+            self.signal = self.check_signals(df)
+            print(f"Pos: {self.in_position}")
+            print(f"Sig: {self.signal}")
 
-    return None
+            # print(self.signal)
+            # time.sleep(10)
 
-
-
-def start(in_position):
-    while True:
-        try:
-            # Получаем данные
-            df = fetch_ohlcv(symbol, timeframe)
-            df = calculate_keltner_channel(df, ema_period, atr_period, multiplier)
-
-            # Проверяем сигналы
-            print(df)
-            signal = check_signals(df)
-            print(f"Pos: {in_position}")
-            print(f"Sig: {signal}")
-
-            if signal == 'buy' and in_position == False:
+            if self.signal == 'buy' and self.in_position == False:
                 print("Сигнал на покупку")
                 # Размещение ордера на покупку
-                # order = exchange.create_market_buy_order(symbol, 0.001)  # Пример размера ордера
-                in_position = True
+                
+                # r = self.session.place_order(
+                #         category="linear",
+                #         symbol="DOGEUSDT",
+                #         side="Buy",
+                #         orderType="Market",
+                #         # qty=floor_price(avbl, 3),
+                #         qty=25,
+                #         marketUnit="quoteCoin", # USDT
+                # )
+                # print(r)
+
+                self.in_position = True
                
-                print(in_position)
-                print(signal)
+                print(self.in_position)
+                print(self.signal)
                 print("Ордер на покупку размещен:")  
 
-            elif signal == 'buy' or signal == None and in_position == True:           
+            elif self.signal == 'buy' or self.signal == None and self.in_position == True:           
                 last_row = df.iloc[-1]
    
                 if last_row['close'] <= last_row['upper_band']:
-                    in_position = False
+
+                    # r = self.session.place_order(
+                    #     category="linear",
+                    #     symbol="DOGEUSDT",
+                    #     side="Sell",
+                    #     orderType="Market",
+                    #     # qty=floor_price(avbl, 3),
+                    #     qty=25,
+                    #     marketUnit="quoteCoin", # USDT
+                    #     # timeInForce="GoodTillCancel",
+                    #     reduceOnly=True,
+                    #     # closeOnTrigger=False,
+                    # )
+
+                    self.in_position = False
 
                     print("Close long position")           
 
-            if signal == 'sell' and in_position == False:
+            if self.signal == 'sell' and self.in_position == False:
                 print("Сигнал на продажу")
                 # # Размещение ордера на продажу
-                # order = exchange.create_market_sell_order(symbol, 0.001)  # Пример размера ордера
-                in_position = True
+            
+                # r = self.session.place_order(
+                #         category="linear",
+                #         symbol="DOGEUSDT",
+                #         side="Sell",
+                #         orderType="Market",
+                #         # qty=floor_price(avbl, 3),
+                #         qty=25,
+                #         marketUnit="quoteCoin", # USDT
+                # )
+
+                self.in_position = True
                 
-                print(in_position)
-                print(signal)
+                print(self.in_position)
+                print(self.signal)
                 print("Ордер на продажу размещен:")   
 
-            elif signal == 'sell' or signal == None and in_position == True: 
+            elif self.signal == 'sell' or self.signal == None and self.in_position == True: 
                 last_row = df.iloc[-1]
    
                 if last_row['close'] >= last_row['lower_band']:
-                    in_position = False
 
-                    print("Close short position")       
+                    # r = self.session.place_order(
+                    #     category="linear",
+                    #     symbol="DOGEUSDT",
+                    #     side="Buy",
+                    #     orderType="Market",
+                    #     # qty=floor_price(avbl, 3),
+                    #     qty=25,
+                    #     marketUnit="quoteCoin", # USDT
+                    #     # timeInForce="GoodTillCancel",
+                    #     reduceOnly=True,
+                    #     # closeOnTrigger=False,
+                    # )
 
-            # Пауза перед следующей итерацией
-            time.sleep(60)
+                    self.in_position = False
 
+                    print("Close short position")  
+
+            time.sleep(10)     
+
+
+        try:
+            ws = WebSocket(
+                testnet=False,
+                channel_type=self.category,
+            )
+
+            stream = ws.kline_stream(
+                symbol=self.symbol,
+                interval=self.interval,
+                callback=save_to_db
+            )
+   
+        except exceptions.InvalidRequestError as e:
+            print("Bybit Request Error", e.status_code, e.message, sep=' | ')
+        except exceptions.FailedRequestError as e:
+                print("Bybit Request Failed", e.status_code, e.message, sep=' | ')
         except Exception as e:
-            print(f"Произошла ошибка: {e}")
-            time.sleep(60)
+            print(e)
 
 
-# Основной цикл торговли
-def main():
-    start(in_position)
 
-if __name__ == "__main__":
-    main()
+    # HTTP method   
+    def http_query(self, session):
+        self.stream_type = 'http'
+
+        if self.save_http:
+            print('save http')
+
+        
+        # klines = self.session.get_kline(category=self.category, symbol=self.symbol, interval=self.interval,)
+        # df = self.create_df(klines["result"]["list"])
+        df = self.ccxt_ohlcv("DOGEUSDT", 1, limit=100)
+
+        return df
+
+
+        
