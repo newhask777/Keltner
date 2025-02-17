@@ -21,12 +21,13 @@ class Indicators:
     #     self.bybit_method = bybit_method
 
     
-        # Инициализация подключения к Bybit
+        # Инициализация подключения к Bybit через библиотеку CCXT
         self.exchange = ccxt.bybit({
             'apiKey': self.api_key,
             'secret': self.api_secret,
         })
 
+        # Инициализация HTTP подключения к Bybit
         self.session = HTTP(
                 # testnet=True,
                 # max_retries=10,
@@ -96,12 +97,35 @@ class Indicators:
         # Условие для покупки
         # if last_row['close'] > last_row['upper_band'] and prev_row['close'] <= prev_row['upper_band']:
         if last_row['close'] > last_row['upper_band'] and prev_row['close'] > prev_row['upper_band']:
-            return 'buy'
+            return 'Buy'
 
         # Условие для продажи
         # elif last_row['close'] < last_row['lower_band'] and prev_row['close'] >= prev_row['lower_band']:
         elif last_row['close'] < last_row['lower_band'] and prev_row['close'] < prev_row['lower_band']:
-            return 'sell'
+            return 'Sell'
+
+        return None
+    
+
+     # Функция для проверки условий входа и выхода
+    def check_signals_by_message(self, df, message):
+        last_row = df.iloc[-1]
+        prev_row = df.iloc[-2]
+
+       
+
+        # Условие для покупки
+        # if message["data"][0]["close"] > last_row['upper_band'] and prev_row['close'] <= prev_row['upper_band']:
+        if float(message["data"][0]["close"]) > last_row['upper_band']:
+            return 'Buy'
+
+        # Условие для продажи
+        # elif message["data"][0]["close"] < last_row['lower_band'] and prev_row['close'] >= prev_row['lower_band']:
+        elif float(message["data"][0]["close"]) < last_row['lower_band']:
+            return 'Sell'
+        
+        # print(message["data"][0]["close"])
+        # print("last row", last_row['upper_band'])
 
         return None
 
