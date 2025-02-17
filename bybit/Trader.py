@@ -4,32 +4,35 @@ import ccxt
 import pandas as pd
 import time
 import json
-from datetime import datetime
-from indicators import Indicators
+from indicators.KeltnerChannel import KeltnerChannel
 
-class ByBitMethods(Indicators):
 
+class BybitTrader(KeltnerChannel):
+    # Инициализация конструктора класса
     def __init__(self, api_key=None, api_secret=None, interval=5, symbol='BTCUSDT', category='linear', qty=None):
         self.api_key = api_key
         self.api_secret = api_secret
         self.interval = interval
         self.symbol = symbol
         self.category = category
-        self.stream_type = ''
         self.qty = qty
 
         # Параметры стратегии
-        # self.timeframe = '5m'  # Таймфрейм
         self.atr_period = 14  # Период для ATR
         self.ema_period = 20  # Период для EMA
-        self.multiplier = 1  # Множитель для ATR
+        self.multiplier = 1   # Множитель для ATR
 
-         # Инициализация подключения к Bybit
+        # Дополнительные параметры состояния
+        self.in_position = False
+        self.signal = None
+
+        # Инициализация подключения к Bybit API через ccxt 
         self.exchange = ccxt.bybit({
             'apiKey': self.api_key,
             'secret': self.api_secret,
         })
 
+        # Инициализация подключения к Bybit API по HTTP
         self.session = HTTP(
                 # testnet=True,
                 # max_retries=10,
@@ -39,18 +42,21 @@ class ByBitMethods(Indicators):
                 # return_response_headers=True
         )
 
-        self.in_position = False
-        self.signal = None
+        # Инициализация подключения к Bybit API по websocket
+        try:
+            self.ws = WebSocket(
+                testnet=False,
+                channel_type=self.category,
+            )
+        except:
+            print("Websocket start connection error")
 
-    # WebSocket method
+
+
+    # Главный торговый метод
     def ws_stream(self):
-        self.stream_type = 'websocket'
 
-        def save_to_db(message):
-            # print(message)
-
-            # with open('json/message.json', 'w', encoding='utf-8') as f:
-            #     json.dump(message, f, indent=4, ensure_ascii=False)
+        def handle_trade_stream(message):
 
             df = self.http_query(self.session)
             # df = df.iloc[:, :-1]
@@ -108,13 +114,13 @@ class ByBitMethods(Indicators):
                     self.in_position = False
                     self.signal = None
 
-                    print("Close long position")           
+                    print("Позиция лонг закрыта")           
 
             if float(message["data"][0]["close"]) < last_row['lower_band']  and self.in_position == False:
             # if self.signal == 'Sell' < last_row['lower_band']  and self.in_position == False:
                 
                 print("Сигнал на продажу")
-                # # Размещение ордера на продажу
+                # Размещение ордера на продажу
             
                 r = self.session.place_order(
                         category=self.category,
@@ -153,21 +159,15 @@ class ByBitMethods(Indicators):
                     self.in_position = False
                     self.signal = None
 
-                    print("Close short position")  
-     
+                    print("Позиция шорт закрыта")  
 
+        # Инициализация потоков websocket
         try:
-            ws = WebSocket(
-                testnet=False,
-                channel_type=self.category,
-            )
-
-            stream = ws.kline_stream(
+            self.ws.kline_stream(
                 symbol=self.symbol,
                 interval=self.interval,
-                callback=save_to_db
-            )
-   
+                callback=handle_trade_stream
+            )  
         except exceptions.InvalidRequestError as e:
             print("Bybit Request Error", e.status_code, e.message, sep=' | ')
         except exceptions.FailedRequestError as e:
@@ -176,14 +176,9 @@ class ByBitMethods(Indicators):
             print(e)
 
 
-
-    # HTTP method   
+    # Получение торговых данных по HTTP   
     def http_query(self, session):
-        self.stream_type = 'http'
 
-        if self.save_http:
-            print('save http')
- 
         # klines = self.session.get_kline(category=self.category, symbol=self.symbol, interval=self.interval,)
         # df = self.create_df(klines["result"]["list"])
         df = self.ccxt_ohlcv(self.symbol, self.interval, limit=100)

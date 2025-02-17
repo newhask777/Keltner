@@ -1,0 +1,47 @@
+{
+    "retCode": 0,
+    "retMsg": "OK",
+    "result": {
+        "nextPageCursor": "1000RATSUSDT%2C1739779200011%2C0",
+        "category": "linear",
+        "list": [
+            {
+                "symbol": "1000RATSUSDT",
+                "leverage": "25.5",
+                "autoAddMargin": 0,
+                "avgPrice": "0.01938",
+                "liqPrice": "0.01190803",
+                "riskLimitValue": "40000",
+                "takeProfit": "",
+                "positionValue": "19.38",
+                "isReduceOnly": false,
+                "tpslMode": "Full",
+                "riskId": 1,
+                "trailingStop": "0",
+                "unrealisedPnl": "-1.42",
+                "markPrice": "0.01796",
+                "adlRankIndicator": 2,
+                "cumRealisedPnl": "-22.6248431",
+                "positionMM": "0.17366012",
+                "createdTime": "1726898381916",
+                "positionIdx": 0,
+                "positionIM": "0.77862019",
+                "seq": 182380556117,
+                "updatedTime": "1739779200011",
+                "side": "Buy",
+                "bustPrice": "",
+                "positionBalance": "0",
+                "leverageSysUpdatedTime": "",
+                "curRealisedPnl": "-0.020263",
+                "size": "1000",
+                "positionStatus": "Normal",
+                "mmrSysUpdatedTime": "",
+                "stopLoss": "",
+                "tradeMode": 0,
+                "sessionAvgPrice": ""
+            }
+        ]
+    },
+    "retExtInfo": {},
+    "time": 1739783691846
+}
