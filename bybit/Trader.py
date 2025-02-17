@@ -5,9 +5,10 @@ import pandas as pd
 import time
 import json
 from indicators.KeltnerChannel import KeltnerChannel
+from bybit.BybitMethods import ByBitMethods
 
 
-class BybitTrader(KeltnerChannel):
+class BybitTrader(KeltnerChannel, ByBitMethods):
     # Инициализация конструктора класса
     def __init__(self, api_key=None, api_secret=None, interval=5, symbol='BTCUSDT', category='linear', qty=None):
         self.api_key = api_key
@@ -58,6 +59,12 @@ class BybitTrader(KeltnerChannel):
 
         def handle_trade_stream(message):
 
+            close_price = float(message["data"][0]["close"]) # Цена закрытия
+            print(close_price)
+            open_price = self.get_open_price()
+            price_change = self.calculate_price_change_percentage(close_price, open_price)
+
+
             df = self.http_query(self.session)
             # df = df.iloc[:, :-1]
             df = self.calculate_keltner_channel(df, self.ema_period, self.atr_period, self.multiplier)
@@ -71,7 +78,7 @@ class BybitTrader(KeltnerChannel):
             print(f"Sig: {self.signal}")
 
             # if self.signal == 'Buy'  and self.in_position == False:
-            if float(message["data"][0]["close"]) > last_row['upper_band']  and self.in_position == False:
+            if close_price > last_row['upper_band']  and self.in_position == False:
                 
                 # print(self.signal)
                 print("Сигнал на покупку")
@@ -95,8 +102,25 @@ class BybitTrader(KeltnerChannel):
 
             elif self.signal == 'Buy' or self.signal == None and self.in_position == True:           
                 last_row = df.iloc[-1]
+
+                if price_change >= 1.55:
+
+                    r = self.session.place_order(
+                        category=self.category,
+                        symbol=self.symbol,
+                        side="Sell",
+                        orderType="Market",
+                        # qty=floor_price(avbl, 3),
+                        qty=self.qty,
+                        # timeInForce="GoodTillCancel",
+                        reduceOnly=True,
+                        # closeOnTrigger=True,
+                    )
+
+                    self.in_position = False
+                    self.signal = None
    
-                if float(message["data"][0]["close"]) < last_row['upper_band']:
+                elif close_price < last_row['upper_band']:
                 # if last_row['close'] < last_row['upper_band']:
 
                     r = self.session.place_order(
@@ -116,7 +140,7 @@ class BybitTrader(KeltnerChannel):
 
                     print("Позиция лонг закрыта")           
 
-            if float(message["data"][0]["close"]) < last_row['lower_band']  and self.in_position == False:
+            if close_price < last_row['lower_band']  and self.in_position == False:
             # if self.signal == 'Sell' < last_row['lower_band']  and self.in_position == False:
                 
                 print("Сигнал на продажу")
@@ -140,8 +164,25 @@ class BybitTrader(KeltnerChannel):
 
             elif self.signal == 'Sell' or self.signal == None and self.in_position == True: 
                 last_row = df.iloc[-1]
+
+                if price_change >= 1.55:
+
+                    r = self.session.place_order(
+                        category=self.category,
+                        symbol=self.symbol,
+                        side="Buy",
+                        orderType="Market",
+                        # qty=floor_price(avbl, 3),
+                        qty=self.qty,
+                        # timeInForce="GoodTillCancel",
+                        reduceOnly=True,
+                        # closeOnTrigger=True,
+                    )
+
+                    self.in_position = False
+                    self.signal = None
    
-                if float(message["data"][0]["close"]) > last_row['lower_band']:
+                elif close_price > last_row['lower_band']:
                 # if last_row['close'] > last_row['lower_band']:
 
                     r = self.session.place_order(
@@ -161,7 +202,7 @@ class BybitTrader(KeltnerChannel):
 
                     print("Позиция шорт закрыта")  
 
-        # Инициализация потоков websocket
+        # Подписка на канал с торговой информацией
         try:
             self.ws.kline_stream(
                 symbol=self.symbol,

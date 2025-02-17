@@ -14,7 +14,35 @@ import json
 
 class ByBitMethods:
 
-    # Функция для проверки условий входа и выхода
+    # Функция для получения цены открытия
+    def get_open_price(self):
+        try:
+            response = self.session.get_positions(
+                category="linear",  # Используйте "linear" для линейных фьючерсов, "inverse" для обратных фьючерсов, "spot" для спота
+                symbol=self.symbol
+            )
+
+            print(response['result']['list'][0]['avgPrice'])
+            return float(response['result']['list'][0]['avgPrice'])
+        except:
+            print('No open positions')
+            return None
+        
+
+    # Функция для расчета изменения цены в процентах  
+    def calculate_price_change_percentage(self, current_price, open_price):
+        try:
+            if open_price > 0:
+                percantage = round(((current_price - open_price) / open_price) * 100, 2)
+                # percantage = round(percantage, 2)
+                print(percantage)
+            return percantage
+        except:
+            return print('no open price')
+
+    
+
+    # Функция для проверки условий входа и выхода Канал Кельтнера
     def check_signals(self, df):
         last_row = df.iloc[-1]
         prev_row = df.iloc[-2]

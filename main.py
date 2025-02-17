@@ -5,10 +5,10 @@ import time
 bybit = BybitTrader(
     api_key='onjgaIMByB9Sk2AEnq', 
     api_secret='u9QYLcd4SGoxaLqjJrCc4JybSpHjRZFVWFEU', 
-    interval=5, 
-    symbol="1000RATSUSDT", 
+    interval=15, 
+    symbol="ACHUSDT", 
     category="linear",
-    qty=1000,
+    qty=500,
 )
 
 
