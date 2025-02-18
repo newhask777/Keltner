@@ -40,7 +40,6 @@ class ByBitMethods:
         except:
             return print('no open price')
 
-    
 
     # Функция для проверки условий входа и выхода Канал Кельтнера
     def check_signals(self, df):

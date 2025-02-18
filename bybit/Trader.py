@@ -102,7 +102,8 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
             elif self.signal == 'Buy' or self.signal == None and self.in_position == True:           
                 last_row = df.iloc[-1]
-
+                
+                # Тэйк профит
                 if price_change >= 1.55:
 
                     r = self.session.place_order(
@@ -119,7 +120,26 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
                     self.in_position = False
                     self.signal = None
-   
+
+                # Стоп лосс
+                elif price_change <= -1.55:
+
+                    r = self.session.place_order(
+                        category=self.category,
+                        symbol=self.symbol,
+                        side="Sell",
+                        orderType="Market",
+                        # qty=floor_price(avbl, 3),
+                        qty=self.qty,
+                        # timeInForce="GoodTillCancel",
+                        reduceOnly=True,
+                        # closeOnTrigger=True,
+                    )
+
+                    self.in_position = False
+                    self.signal = None
+
+                # Закрыть позицию
                 elif close_price < last_row['upper_band']:
                 # if last_row['close'] < last_row['upper_band']:
 
@@ -165,6 +185,7 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
             elif self.signal == 'Sell' or self.signal == None and self.in_position == True: 
                 last_row = df.iloc[-1]
 
+                # Тэйк профит
                 if price_change >= 1.55:
 
                     r = self.session.place_order(
@@ -181,7 +202,26 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
                     self.in_position = False
                     self.signal = None
-   
+
+                # Стоп лосс
+                elif price_change <= -1.55:
+
+                    r = self.session.place_order(
+                        category=self.category,
+                        symbol=self.symbol,
+                        side="Buy",
+                        orderType="Market",
+                        # qty=floor_price(avbl, 3),
+                        qty=self.qty,
+                        # timeInForce="GoodTillCancel",
+                        reduceOnly=True,
+                        # closeOnTrigger=True,
+                    )
+
+                    self.in_position = False
+                    self.signal = None
+
+                # Закрыть позицию
                 elif close_price > last_row['lower_band']:
                 # if last_row['close'] > last_row['lower_band']:
 

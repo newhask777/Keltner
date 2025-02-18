@@ -8,7 +8,7 @@ bybit = BybitTrader(
     interval=15, 
     symbol="ACHUSDT", 
     category="linear",
-    qty=500,
+    qty=200,
 )
 
 
