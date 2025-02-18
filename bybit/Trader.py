@@ -35,7 +35,7 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
         # Инициализация подключения к Bybit API по HTTP
         self.session = HTTP(
-                # testnet=True,
+                testnet=False,
                 # max_retries=10,
                 # recv_window=60000,
                 api_key = self.api_key,
@@ -79,48 +79,32 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
             # if self.signal == 'Buy'  and self.in_position == False:
             if close_price > last_row['upper_band']  and self.in_position == False:
-                
-                # print(self.signal)
-                print("Сигнал на покупку")
-                # Размещение ордера на покупку
-                
-                r = self.session.place_order(
-                        category=self.category,
-                        symbol=self.symbol,
-                        side="Buy",
-                        orderType="Market",
-                        # qty=floor_price(avbl, 3),
-                        qty=self.qty,
-                )
 
-                self.in_position = True
-                self.signal = 'Buy'
-               
-                print(self.in_position)
-                print(self.signal)
-                print("Ордер на покупку размещен:")  
+                self.place_buy_market_order()
 
             elif self.signal == 'Buy' or self.signal == None and self.in_position == True:           
                 last_row = df.iloc[-1]
-                
+
                 # Тэйк профит
                 if price_change >= 1.55:
 
+                    # Тэйк профит
+
                     r = self.session.place_order(
-                        category=self.category,
-                        symbol=self.symbol,
-                        side="Sell",
-                        orderType="Market",
-                        # qty=floor_price(avbl, 3),
-                        qty=self.qty,
-                        # timeInForce="GoodTillCancel",
-                        reduceOnly=True,
-                        # closeOnTrigger=True,
-                    )
+                            category=self.category,
+                            symbol=self.symbol,
+                            side="Sell",
+                            orderType="Market",
+                            # qty=floor_price(avbl, 3),
+                            qty=self.qty,
+                            # timeInForce="GoodTillCancel",
+                            reduceOnly=True,
+                            # closeOnTrigger=True,
+                        )
 
                     self.in_position = False
-                    self.signal = None
-
+                    self.signal = None 
+                
                 # Стоп лосс
                 elif price_change <= -1.55:
 
@@ -141,46 +125,30 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
                 # Закрыть позицию
                 elif close_price < last_row['upper_band']:
-                # if last_row['close'] < last_row['upper_band']:
 
-                    r = self.session.place_order(
-                        category=self.category,
-                        symbol=self.symbol,
-                        side="Sell",
-                        orderType="Market",
-                        # qty=floor_price(avbl, 3),
-                        qty=self.qty,
-                        # timeInForce="GoodTillCancel",
-                        reduceOnly=True,
-                        # closeOnTrigger=True,
-                    )
+                    self.place_close_position_order("Sell")
 
-                    self.in_position = False
-                    self.signal = None
+                    # r = self.session.place_order(
+                    #     category=self.category,
+                    #     symbol=self.symbol,
+                    #     side="Sell",
+                    #     orderType="Market",
+                    #     # qty=floor_price(avbl, 3),
+                    #     qty=self.qty,
+                    #     # timeInForce="GoodTillCancel",
+                    #     reduceOnly=True,
+                    #     # closeOnTrigger=True,
+                    # )
 
-                    print("Позиция лонг закрыта")           
+                    # self.in_position = False
+                    # self.signal = None
+
+                    # print("Позиция лонг закрыта")           
 
             if close_price < last_row['lower_band']  and self.in_position == False:
             # if self.signal == 'Sell' < last_row['lower_band']  and self.in_position == False:
-                
-                print("Сигнал на продажу")
-                # Размещение ордера на продажу
-            
-                r = self.session.place_order(
-                        category=self.category,
-                        symbol=self.symbol,
-                        side="Sell",
-                        orderType="Market",
-                        # qty=floor_price(avbl, 3),
-                        qty=self.qty,
-                )
 
-                self.in_position = True
-                self.signal = 'Sell'
-                
-                print(self.in_position)
-                print(self.signal)
-                print("Ордер на продажу размещен:")   
+                self.place_sell_market_order()
 
             elif self.signal == 'Sell' or self.signal == None and self.in_position == True: 
                 last_row = df.iloc[-1]
@@ -223,24 +191,26 @@ class BybitTrader(KeltnerChannel, ByBitMethods):
 
                 # Закрыть позицию
                 elif close_price > last_row['lower_band']:
-                # if last_row['close'] > last_row['lower_band']:
 
-                    r = self.session.place_order(
-                        category=self.category,
-                        symbol=self.symbol,
-                        side="Buy",
-                        orderType="Market",
-                        # qty=floor_price(avbl, 3),
-                        qty=self.qty,
-                        # timeInForce="GoodTillCancel",
-                        reduceOnly=True,
-                        # closeOnTrigger=True,
-                    )
+                    self.place_close_position_order("Buy")
 
-                    self.in_position = False
-                    self.signal = None
+                    # r = self.session.place_order(
+                    #     category=self.category,
+                    #     symbol=self.symbol,
+                    #     side="Buy",
+                    #     orderType="Market",
+                    #     # qty=floor_price(avbl, 3),
+                    #     qty=self.qty,
+                    #     # timeInForce="GoodTillCancel",
+                    #     reduceOnly=True,
+                    #     # closeOnTrigger=True,
+                    # )
 
-                    print("Позиция шорт закрыта")  
+                    # self.in_position = False
+                    # self.signal = None
+
+                    # print("Позиция шорт закрыта")  
+                    
 
         # Подписка на канал с торговой информацией
         try:

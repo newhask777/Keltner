@@ -103,3 +103,87 @@ class ByBitMethods:
     
         return int(balance["result"]["list"][0]["size"])
         
+
+    # Функция размещения ордера на покупку по рыночной цене 
+    def place_buy_market_order(self):
+             
+        # print(self.signal)
+        print("Сигнал на покупку")
+        # Размещение ордера на покупку
+                
+        r = self.session.place_order(
+                category=self.category,
+                symbol=self.symbol,
+                side="Buy",
+                orderType="Market",
+                # qty=floor_price(avbl, 3),
+                qty=self.qty,
+        )
+
+        self.in_position = True
+        self.signal = 'Buy'
+               
+        print(self.in_position)
+        print(self.signal)
+        print("Ордер на покупку размещен:") 
+
+
+    #
+    def place_sell_market_order(self):
+        print("Сигнал на продажу")
+        # Размещение ордера на продажу
+            
+        r = self.session.place_order(
+                category=self.category,
+                symbol=self.symbol,
+                side="Sell",
+                orderType="Market",
+                # qty=floor_price(avbl, 3),
+                qty=self.qty,
+            )
+
+        self.in_position = True
+        self.signal = 'Sell'
+                
+        print(self.in_position)
+        print(self.signal)
+        print("Ордер на продажу размещен:")  
+    
+        
+    #
+    def place_take_profit_order(self):
+        # Тэйк профит
+        r = self.session.place_order(
+                category=self.category,
+                symbol=self.symbol,
+                side="Sell",
+                orderType="Market",
+                # qty=floor_price(avbl, 3),
+                qty=self.qty,
+                # timeInForce="GoodTillCancel",
+                reduceOnly=True,
+                # closeOnTrigger=True,
+            )
+
+        self.in_position = False
+        self.signal = None 
+
+
+    #
+    def place_close_position_order(self, side):
+
+        r = self.session.place_order(
+                category=self.category,
+                symbol=self.symbol,
+                side=side,
+                orderType="Market",
+                # qty=floor_price(avbl, 3),
+                qty=self.qty,
+                # timeInForce="GoodTillCancel",
+                reduceOnly=True,
+                # closeOnTrigger=True,
+            )
+
+        self.in_position = False
+        self.signal = None
+        print(f"Позиция {side} закрыта")  
