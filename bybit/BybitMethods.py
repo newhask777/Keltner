@@ -1,6 +1,4 @@
-from pybit.unified_trading import WebSocket, HTTP
-from pybit import exceptions
-import ccxt
+from pybit.unified_trading import HTTP
 import pandas as pd
 import json
 
@@ -83,7 +81,7 @@ class ByBitMethods:
 
 
     # Функция для проверки доступных средств
-    def get_assets(self, cl : HTTP):
+    def get_assets(self, client : HTTP):
         """
         Получаю остатки на аккаунте по конкретной монете
         :param cl:
@@ -148,8 +146,8 @@ class ByBitMethods:
         print(self.in_position)
         print(self.signal)
         print("Ордер на продажу размещен:")  
-    
-        
+
+
     #
     def place_take_profit_order(self):
         # Тэйк профит
@@ -170,7 +168,7 @@ class ByBitMethods:
 
 
     #
-    def place_close_position_order(self, side):
+    def place_close_position_order(self, side: str = "", direction: str = ""):
 
         r = self.session.place_order(
                 category=self.category,
@@ -186,4 +184,4 @@ class ByBitMethods:
 
         self.in_position = False
         self.signal = None
-        print(f"Позиция {side} закрыта")  
+        print(f"Позиция {direction} закрыта")  
